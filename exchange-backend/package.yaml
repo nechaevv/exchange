@@ -1,0 +1,46 @@
+name:                exchange-backend
+version:             0.1.0.0
+github:              "nechaevv/exchange"
+license:             BSD3
+author:              "Vasilii Nechaev"
+maintainer:          "vn.glider@gmail.com"
+copyright:           "2019 Vasilii Nechaev"
+
+extra-source-files:
+- README.md
+
+description:         Please see the README on GitHub at <https://github.com/nechaevv/exchange#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- aeson
+- postgresql-simple
+- servant
+- servant-server
+- wai
+- warp
+
+library:
+  source-dirs: src
+
+executables:
+  exchange-backend-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - exchange-backend
+
+tests:
+  exchange-backend-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - exchange-backend
