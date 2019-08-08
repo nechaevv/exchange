@@ -7,8 +7,8 @@ import Data.Data (Proxy)
 import Servant
 import Api
 
-apiProxy :: Proxy Api
-apiProxy = Proxy
+api :: Proxy API
+api = Proxy
 
 app :: Application
-app = serve apiProxy server
+app = serve api server

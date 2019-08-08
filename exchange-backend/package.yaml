@@ -17,6 +17,7 @@ dependencies:
 - postgresql-simple
 - servant
 - servant-server
+- uuid
 - wai
 - warp
 

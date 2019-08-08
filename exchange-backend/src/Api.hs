@@ -2,15 +2,25 @@
 {-# LANGUAGE TypeOperators #-}
 module Api where
 
+import Control.Monad.IO.Class
+import Data.Aeson
 import Servant
 import Servant.API
 
-type HealthApi = "health" :> Post '[PlainText] NoContent
+import Users
+
+instance ToJSON User
+
+type HealthAPI = "health" :> Post '[PlainText] NoContent
+type UsersAPI = "users" :> Get '[JSON] [User]
 
 healthHandler :: Handler NoContent
 healthHandler = return NoContent
 
-type Api = "api" :> HealthApi
+usersHandler :: Handler [User]
+usersHandler = liftIO userList
 
-server :: Server Api
-server = healthHandler
+type API = "api" :> (HealthAPI :<|> UsersAPI)
+
+server :: Server API
+server = healthHandler :<|> usersHandler
