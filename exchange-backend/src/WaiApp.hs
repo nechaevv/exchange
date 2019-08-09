@@ -6,9 +6,10 @@ import Network.Wai (Application)
 import Data.Data (Proxy)
 import Servant
 import Api
+import DB
 
 api :: Proxy API
 api = Proxy
 
-app :: Application
-app = serve api server
+app :: ConnectionPool -> Application
+app pool = serve api $ server pool

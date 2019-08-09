@@ -8,6 +8,7 @@ import Servant
 import Servant.API
 
 import Users
+import DB
 
 instance ToJSON User
 
@@ -17,10 +18,10 @@ type UsersAPI = "users" :> Get '[JSON] [User]
 healthHandler :: Handler NoContent
 healthHandler = return NoContent
 
-usersHandler :: Handler [User]
-usersHandler = liftIO userList
+usersHandler :: ConnectionPool -> Handler [User]
+usersHandler pool = liftIO $ userList pool
 
 type API = "api" :> (HealthAPI :<|> UsersAPI)
 
-server :: Server API
-server = healthHandler :<|> usersHandler
+server :: ConnectionPool -> Server API
+server pool = healthHandler :<|> usersHandler pool

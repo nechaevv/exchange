@@ -3,17 +3,19 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Users where
 
+import Data.Pool
 import Data.UUID
 import Control.Exception (bracket)
 import Database.PostgreSQL.Simple
-import Control.Monad (forM_)
 import GHC.Generics (Generic)
+
+import DB
 
 data User = User {
   id :: UUID ,
   name :: String
 } deriving (Generic, FromRow)
 
-userList :: IO [User]
-userList = bracket (connectPostgreSQL "postgresql://exchange:exchange@localhost/exchange") close $ \conn ->  
+userList :: ConnectionPool -> IO [User]
+userList pool = withResource pool $ \conn ->  
   query_ conn "select id, name from \"Users\""
