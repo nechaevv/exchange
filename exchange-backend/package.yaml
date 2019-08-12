@@ -15,10 +15,12 @@ dependencies:
 - base >= 4.7 && < 5
 - aeson
 - bytestring
+- free
 - postgresql-simple
 - resource-pool
 - servant
 - servant-server
+- transformers
 - uuid
 - wai
 - warp

@@ -19,7 +19,7 @@ healthHandler :: Handler NoContent
 healthHandler = return NoContent
 
 usersHandler :: ConnectionPool -> Handler [User]
-usersHandler pool = liftIO $ userList pool
+usersHandler pool = liftDBIO pool userList
 
 type API = "api" :> (HealthAPI :<|> UsersAPI)
 
