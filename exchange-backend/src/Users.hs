@@ -1,22 +1,29 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric  #-}
 {-# LANGUAGE OverloadedStrings #-}
-
 module Users where
 
-import Data.Pool
-import Data.UUID
-import Control.Exception (bracket)
-import Database.PostgreSQL.Simple
 import GHC.Generics (Generic)
-import Control.Monad
+import Data.UUID
+import Database.PostgreSQL.Simple
 
-import DB
+import DBIO
+
+type UserId = UUID
 
 data User = User {
-  id :: UUID ,
+  userId :: UserId ,
   name :: String
 } deriving (Generic, FromRow)
 
 userList :: DBIO [User]
-userList = dbio $ \conn -> query_ conn "select id, name from \"Users\""
+userList = return queryList "select id, name from \"Users\""
+
+maybeHead :: [a] -> Maybe a
+maybeHead (x:_) = Just x
+maybeHead [] = Nothing
+
+userWithName :: String -> DBIO (Maybe User)
+userWithName name = return $ maybeHead <$> queryUsers
+  where queryUsers :: DBOp [User]
+        queryUsers = queryListParam "select id, name from \"Users\" where name=?" [name]

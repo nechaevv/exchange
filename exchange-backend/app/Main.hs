@@ -3,7 +3,7 @@ module Main where
 
 import Network.Wai.Handler.Warp
 import WaiApp
-import DB
+import DBIO
 
 main :: IO ()
 main = do

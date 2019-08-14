@@ -6,7 +6,7 @@ import Network.Wai (Application)
 import Data.Data (Proxy)
 import Servant
 import Api
-import DB
+import DBIO
 
 api :: Proxy API
 api = Proxy

@@ -20,7 +20,7 @@ dependencies:
 - resource-pool
 - servant
 - servant-server
-- transformers
+- time
 - uuid
 - wai
 - warp
