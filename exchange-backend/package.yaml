@@ -24,6 +24,7 @@ dependencies:
 - uuid
 - wai
 - warp
+- yaml
 
 library:
   source-dirs: src
