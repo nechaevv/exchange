@@ -7,9 +7,10 @@ import Data.Aeson
 import Servant
 import Servant.API
 
-import Users
+import qualified Users
+import Users (User, userList, userWithName)
 import Orders
-import DBIO
+import DB
 
 instance ToJSON User
 
@@ -23,10 +24,13 @@ healthHandler = return NoContent
 usersHandler :: ConnectionPool -> Handler [User]
 usersHandler pool = liftDBIO pool userList
 
---ordersHandler :: ConnectionPool -> String -> Handler [UserOrder]
---ordersHandler pool = liftDBIO pool $ \userName -> do
-  --user <- userWithName userName
-  --userOrdersList user <&> Users.userId
+ordersHandler :: ConnectionPool -> String -> Handler [UserOrder]
+ordersHandler pool userName = liftDBIO pool $ do
+  user <- userWithName userName
+  let uid = Users.userId <$> user
+  ordersById uid
+    where ordersById (Just id) = userOrdersList id
+          ordersById Nothing = return []
 
 type API = "api" :> (HealthAPI :<|> UsersAPI)
 

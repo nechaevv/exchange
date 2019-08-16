@@ -6,7 +6,7 @@ module Tickers where
 import GHC.Generics (Generic)
 import Data.UUID (UUID)
 import Database.PostgreSQL.Simple
-import DBIO
+import DB
 
 type TickerId = UUID
 
@@ -17,4 +17,4 @@ data Ticker = Ticker {
 } deriving (Generic, FromRow)
 
 tickerList :: DBIO[Ticker]
-tickerList = return query_ "select id, symbol, name from \"Tickers\""
+tickerList = queryList "select id, symbol, name from \"Tickers\""

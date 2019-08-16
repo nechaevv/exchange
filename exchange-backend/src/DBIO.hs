@@ -1,65 +1,42 @@
-{-# LANGUAGE DataKinds  #-}
-module DBIO(
-  DBIO,
-  DBOp,
-  runDBIO,
-  liftDBIO,
-  ConnectionPool,
-  initConnectionPool,
-  queryList,
-  queryListParam
-) where
+{-# LANGUAGE GADTs #-}
+module DBIO where
 
 import Control.Monad
 import Control.Monad.IO.Class
 import Data.ByteString (ByteString)
 import Data.Pool
 import Database.PostgreSQL.Simple
+import GHC.Base
 
-type ConnectionPool = Pool Connection
 type DBOp a = Connection -> IO a
 
-data DBIO a = Pure DBOp a | Wrapped (IO (DBIO a))
+data DBIO a where
+  Pure :: DBOp a -> DBIO a
+  Wrapped :: IO (DBIO a) -> DBIO a
+  Joined :: (b -> c -> a) -> DBIO b -> (b -> DBIO c) -> DBIO a
+
+instance Functor DBIO where
+  fmap fn (Pure dbop) = Pure $ fmap fn . dbop
+  fmap fn (Wrapped io) = Wrapped $ fmap fn <$> io
+  fmap fn (Joined biFn b c) = Joined joinFn b c
+    where joinFn = ((.).(.)) fn biFn
+
+
+instance Applicative DBIO where
+  pure m = Pure $ \_ -> return m
+  liftA2 biFn b c = Joined biFn b (const c)
+
+instance Monad DBIO where
+  (>>=) = Joined (const id)
 
 instance MonadIO DBIO where
   liftIO m = Pure $ const m
 
-instance Functor DBIO where
-  fmap fn (Pure dbop) = Pure dbop <$> fn
-  fmap fn Wrapped io = fn <$> io
+runDBIO :: DBIO a -> Connection -> IO a
+runDBIO (Pure a) conn = a conn
+runDBIO (Wrapped fa) conn = fa >>= \a -> runDBIO a conn 
+runDBIO (Joined biFn fa fb) conn = liftA2 biFn ioa iob
+  where ioa = runDBIO fa conn
+        iob = ioa >>= \a -> runDBIO (fb a) conn
 
-instance Applicative DBIO where
-  pure m = Pure $ const m
---  (<*>) fn Pure dbop = Pure $ fn <$> 
-
--- instance Monad DBIO where
-  
-
-runDBIO :: ConnectionPool -> DBIO a -> IO a
-runDBIO pool dbio = withResource pool $ \conn -> exec conn dbio
-  where exec :: Connection -> DBIO a -> IO a
-        exec conn (Pure a) = a conn
-        exec conn (Free fa) = fa >>= \a -> exec conn a
-
-liftDBIO :: MonadIO m => ConnectionPool -> DBIO a -> m a
-liftDBIO pool dbio = liftIO $ runDBIO pool dbio
-
-type ConnectionString = ByteString
-
-initConnectionPool :: ConnectionString -> IO ConnectionPool
-initConnectionPool connStr =
-  createPool (connectPostgreSQL connStr)
-             close
-             1 -- stripes
-             10 -- unused connections are kept open for a minute
-             10 -- max. 10 connections open per stripe
-
---flip3 :: (a -> b -> c -> d) -> b -> c -> a -> d
---flip3 fn = flip fn
-
-queryListParam :: (ToRow q, FromRow r) => Query -> q -> DBOp [r]
-queryListParam qt q conn = Database.PostgreSQL.Simple.query conn qt q
-
-queryList :: (FromRow r) => Query -> DBOp [r]
-queryList qt conn = Database.PostgreSQL.Simple.query_ conn qt
 
