@@ -6,11 +6,11 @@ module Orders where
 
 import Data.UUID
 import Data.Time
-import Database.PostgreSQL.Simple
 import DB
 import GHC.Generics (Generic)
 import Tickers
 import Users
+import Data.Scientific (Scientific)
 
 type OrderId = Int
 
@@ -19,15 +19,15 @@ data UserOrder = UserOrder {
   tickerId :: TickerId,
   userId :: UserId,
   orderType :: String,
-  limitPrice :: Maybe Rational,
-  stopPrice :: Maybe Rational,
-  amount :: Rational,
+  limitPrice :: Maybe Scientific,
+  stopPrice :: Maybe Scientific,
+  amount :: Scientific,
   isActive :: Bool,
   orderTime :: LocalTime
 } deriving(Generic, FromRow)
 
 userOrdersList :: UserId -> DBIO[UserOrder]
-userOrdersList userId = queryListParam
-  "select id, \"tickerId\", \"userId\", \"orderType\", \"limitPrice\", \"stopPrice\",\
+userOrdersList userId = queryWith
+  "select id, \"tickerId\", \"userId\", \"type\"::text, \"limitPrice\", \"stopPrice\",\
              \\"amount\", \"isActive\", \"orderTime\" from \"Orders\"\
              \where \"userId\"=?" [userId]
