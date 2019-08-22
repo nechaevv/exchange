@@ -1,8 +1,11 @@
 module DB (
   DBIO,
+  ConnectionString,
   ConnectionPool,
+  DBPoolConfig,
   PG.FromRow,
   PG.ToRow,
+  PGF.FromField,
   initConnectionPool, 
   liftDBIO,
   query,
@@ -17,22 +20,33 @@ module DB (
 
 import Control.Monad.IO.Class
 import Data.ByteString (ByteString)
-import Data.Pool
+import qualified Data.Pool
 import Data.Time.Clock (NominalDiffTime)
 import qualified Database.PostgreSQL.Simple as PG
+--import qualified Database.PostgreSQL.Simple.Types as PGT
+import qualified Database.PostgreSQL.Simple.FromField as PGF
 import Control.Monad.Trans.Reader (ask, ReaderT, runReaderT)
 import Control.Monad (liftM)
 import Data.Int (Int64)
 
 type ConnectionString = ByteString
-type ConnectionPool = Pool PG.Connection
+type ConnectionPool = Data.Pool.Pool PG.Connection
 type DBIO = ReaderT PG.Connection IO
 
-initConnectionPool :: ConnectionString -> Int -> NominalDiffTime -> Int -> IO ConnectionPool
-initConnectionPool connStr = createPool (PG.connectPostgreSQL connStr) PG.close
+data DBPoolConfig = DBPoolConfig {
+  connectionString :: ConnectionString,
+  numStripes :: Int,
+  idleTime :: NominalDiffTime,
+  maxResources :: Int
+}
+
+initConnectionPool :: DBPoolConfig -> IO ConnectionPool
+initConnectionPool config = Data.Pool.createPool (PG.connectPostgreSQL (connectionString config)) PG.close
+  (numStripes config) (idleTime config) (maxResources config)
+  
 
 liftDBIO :: MonadIO m => ConnectionPool -> DBIO a -> m a
-liftDBIO pool dbio = liftIO $ withResource pool $ runReaderT dbio
+liftDBIO pool dbio = liftIO $ Data.Pool.withResource pool $ runReaderT dbio
 
 withConnection :: (PG.Connection -> IO a) -> DBIO a
 withConnection dbOp = ask >>= \conn -> liftIO $ dbOp conn

@@ -25,7 +25,7 @@ create table "Orders"(
     "stopPrice" decimal,
     "amount" decimal not null,
     "isActive" bool not null,
-    "orderTime" timestamp not null
+    "orderTime" timestamptz not null
 );
 
 create table "Trades"(
@@ -36,4 +36,10 @@ create table "Trades"(
     "takerOrderId" bigint not null references "Orders"("id"),
     "amount" decimal not null,
     "price" decimal not null
+);
+
+create table "AuthTokens"(
+    "token" uuid primary key,
+    "userId" uuid not null references "Users"("id"),
+    "issueTime" timestamptz not null default now()
 );
